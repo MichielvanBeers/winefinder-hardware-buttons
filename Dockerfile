@@ -3,7 +3,7 @@ FROM python:3.10-alpine
 COPY . /app
 WORKDIR /app
 
-RUN apk update && apk add --virtual .build-deps gcc && \
+RUN apk update && apk add --virtual .build-deps gcc linux-headers musl-dev && \
  python3 -m pip install -r requirements.txt --no-cache-dir && \
  apk --purge del .build-deps
 
