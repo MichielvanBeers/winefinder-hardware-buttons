@@ -51,8 +51,21 @@ def update_occupied_state(id,state):
     data=json.dumps(request_body)
     requests.request("PATCH",URL,headers=HEADERS,data=data)
 
-response = requests.request("GET",BASE_URL + 'places/',headers=HEADERS)
-response_json = response.json()
+retries = 0
+RETRY_LIMIT = 10
+
+while retries < RETRY_LIMIT:
+    try:
+        time.sleep(5)
+        response = requests.request("GET",BASE_URL + 'places/',headers=HEADERS)
+        response_json = response.json()
+        break
+    except Exception as e:
+        print("Couldn't load configuration, Django might still be loading")
+        retries += 1
+        if retries == RETRY_LIMIT:
+            raise e
+        print("Retrying in 5 seconds..")
 
 wiringpi.wiringPiSetup()
 
