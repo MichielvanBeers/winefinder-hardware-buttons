@@ -7,7 +7,7 @@ import json
 import os
 
 PIN_BASE = 65
-BASE_URL = 'http://localhost:9000/'
+BASE_URL = 'http://proxy:9000/'
 AUTH_TOKEN = os.environ['AUTH_TOKEN'] 
 HEADERS = {
     "Authorization": "Token " + AUTH_TOKEN,
