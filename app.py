@@ -54,51 +54,55 @@ def update_occupied_state(id,state):
 retries = 0
 RETRY_LIMIT = 10
 
-while retries < RETRY_LIMIT:
-    try:
-        time.sleep(5)
-        response = requests.request("GET",BASE_URL + 'places/',headers=HEADERS)
-        response_json = response.json()
-        break
-    except Exception as e:
-        print("Couldn't load configuration, Django might still be loading")
-        retries += 1
-        if retries == RETRY_LIMIT:
-            raise e
-        print("Retrying in 5 seconds..")
+if __name__ == "__main__":
+    print("Waiting 30 seconds for Django to start..")
+    time.sleep(30)
 
-wiringpi.wiringPiSetup()
+    while retries < RETRY_LIMIT:
+        try:
+            time.sleep(5)
+            response = requests.request("GET",BASE_URL + 'places/',headers=HEADERS)
+            response_json = response.json()
+            break
+        except Exception as e:
+            print("Couldn't load configuration, Django might still be loading")
+            retries += 1
+            if retries == RETRY_LIMIT:
+                raise e
+            print("Retrying in 5 seconds..")
 
-for adress in PIN_MAPPING:
-    wiringpi.mcp23017Setup(PIN_BASE,int(adress, 0))
+    wiringpi.wiringPiSetup()
 
-previous_state = {}
-current_state = {}
+    for adress in PIN_MAPPING:
+        wiringpi.mcp23017Setup(PIN_BASE,int(adress, 0))
 
-for place in response_json:
-    pin = set_pin_mode(place['i2c_adress'],place['pin_name'],PIN_MAPPING)
+    previous_state = {}
+    current_state = {}
 
-    previous_state[place['id']] = {
-        "pin": pin,
-        "state": False
-    }
-    current_state[place['id']] = {
-        "pin": pin,
-        "state": False
-    }
+    for place in response_json:
+        pin = set_pin_mode(place['i2c_adress'],place['pin_name'],PIN_MAPPING)
 
-print("Awaiting input..")
+        previous_state[place['id']] = {
+            "pin": pin,
+            "state": False
+        }
+        current_state[place['id']] = {
+            "pin": pin,
+            "state": False
+        }
 
-while True:
-    time.sleep(0.1)
-    previous_state = copy.deepcopy(current_state)
+    print("Awaiting input..")
 
-    for gpio in current_state:
-        current_state[gpio]['state'] = not wiringpi.digitalRead(current_state[gpio]['pin'])
+    while True:
+        time.sleep(0.1)
+        previous_state = copy.deepcopy(current_state)
 
-    if previous_state != current_state:
-        for diff in list(dictdiffer.diff(previous_state, current_state)):
-            id = str(diff[1][0])
-            state = str(diff[2][1])
-            update_occupied_state(id,state)
+        for gpio in current_state:
+            current_state[gpio]['state'] = not wiringpi.digitalRead(current_state[gpio]['pin'])
+
+        if previous_state != current_state:
+            for diff in list(dictdiffer.diff(previous_state, current_state)):
+                id = str(diff[1][0])
+                state = str(diff[2][1])
+                update_occupied_state(id,state)
 
